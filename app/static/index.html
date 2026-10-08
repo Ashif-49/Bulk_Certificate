@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CertifyPro - High Performance Bulk Certificate Generator</title>
+  <meta name="description" content="Generate, manage, and download thousands of elegant PDF certificates in bulk with real-time job tracking and streaming ZIP exports.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-icon" aria-hidden="true">📜</div>
+        <div>
+          <h1 class="brand-title">CertifyPro <span class="brand-badge">Bulk Engine</span></h1>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="system-pill" id="system-health-pill">
+          <span class="status-dot"></span>
+          <span id="system-health-text">Backend Connected</span>
+        </div>
+        <a href="/docs" target="_blank" class="header-link" id="api-docs-link">API Swagger</a>
+      </div>
+    </header>
+
+    <!-- Main Grid: Job Creator Studio & Live Sample Preview -->
+    <main class="main-grid" id="job-creator-section">
+      <!-- Left Panel: Job Submission Form -->
+      <section class="glass-card" aria-labelledby="creator-studio-title">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="creator-studio-title">Certificate Job Studio</h2>
+            <p class="card-subtitle">Configure issuer information and submit recipients</p>
+          </div>
+        </div>
+
+        <form id="job-submission-form" novalidate>
+          <!-- Metadata Fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="input-event-name">Event / Certification Title *</label>
+              <input type="text" id="input-event-name" class="form-input" placeholder="e.g. Annual AI & Tech Summit 2026" value="Mastering Advanced Software Architecture" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-issuer-name">Authorized Issuer / Organization *</label>
+              <input type="text" id="input-issuer-name" class="form-input" placeholder="e.g. Institute of Modern Engineering" value="Institute of Software Leadership" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="input-issue-date">Issue Date *</label>
+              <input type="date" id="input-issue-date" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-default-course">Default Track / Specialization</label>
+              <input type="text" id="input-default-course" class="form-input" placeholder="e.g. Distributed Systems Specialization" value="Enterprise Cloud Systems">
+            </div>
+          </div>
+
+          <!-- Input Mode Tabs -->
+          <div class="tabs-nav" role="tablist">
+            <button type="button" class="tab-btn active" id="tab-btn-csv" role="tab" aria-selected="true" aria-controls="panel-csv">
+              📁 CSV Upload
+            </button>
+            <button type="button" class="tab-btn" id="tab-btn-manual" role="tab" aria-selected="false" aria-controls="panel-manual">
+              ✍️ Interactive Builder
+            </button>
+            <button type="button" class="tab-btn" id="tab-btn-json" role="tab" aria-selected="false" aria-controls="panel-json">
+              ⚙️ JSON Payload
+            </button>
+          </div>
+
+          <!-- Tab Panel 1: CSV Upload -->
+          <div id="panel-csv" class="tab-panel active" role="tabpanel">
+            <div class="dropzone" id="csv-dropzone" tabindex="0">
+              <div class="dropzone-icon">📥</div>
+              <p class="dropzone-title">Click or drag & drop recipient CSV file</p>
+              <p class="dropzone-desc">Must include headers: <code>name</code>, <code>email</code>, and optional <code>course_title</code></p>
+              <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-browse-file">Browse CSV</button>
+              <div id="selected-file-display" style="display: none;">
+                <span class="file-info-badge" id="file-name-badge">📄 sample.csv</span>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+              <span class="text-xs text-muted">Supports UTF-8 and Excel exports with BOM (Max 5MB)</span>
+              <a href="/sample.csv" download="sample_recipients.csv" class="btn btn-outline-gold btn-sm" id="btn-download-sample-csv">
+                ⬇️ Download Sample CSV
+              </a>
+            </div>
+          </div>
+
+          <!-- Tab Panel 2: Manual Builder -->
+          <div id="panel-manual" class="tab-panel" role="tabpanel" style="display: none;">
+            <div style="max-height: 280px; overflow-y: auto; padding-right: 4px; margin-bottom: 12px;">
+              <table class="recipient-builder-table">
+                <thead>
+                  <tr>
+                    <th style="width: 32%;">Name *</th>
+                    <th style="width: 38%;">Email *</th>
+                    <th style="width: 24%;">Specialization</th>
+                    <th style="width: 6%;"></th>
+                  </tr>
+                </thead>
+                <tbody id="builder-tbody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-recipient-row">
+              ➕ Add Another Recipient
+            </button>
+          </div>
+
+          <!-- Tab Panel 3: JSON Payload -->
+          <div id="panel-json" class="tab-panel" role="tabpanel" style="display: none;">
+            <div class="form-group">
+              <label class="form-label" for="json-recipients-textarea">Recipients JSON Array</label>
+              <textarea id="json-recipients-textarea" class="form-textarea" rows="8" placeholder='[{"name": "Alice Smith", "email": "alice@example.com", "course_title": "Cloud Architecture"}]'></textarea>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="actions-row">
+            <button type="submit" class="btn btn-primary" id="btn-submit-job" style="flex: 2;">
+              <span id="btn-submit-text">🚀 Launch Certificate Generation</span>
+              <span class="spinner" id="btn-submit-spinner" style="display: none;"></span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-preview-sample" style="flex: 1;">
+              👁️ Preview Layout
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Panel: Live Certificate Preview -->
+      <section class="glass-card preview-pane" aria-labelledby="preview-pane-title">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="preview-pane-title">Live Layout Inspector</h2>
+            <p class="card-subtitle">Real-time PDF preview rendered dynamically</p>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-preview" title="Refresh Preview">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="preview-frame-container" id="preview-container">
+          <div class="preview-placeholder" id="preview-placeholder">
+            <div class="preview-placeholder-icon">📜</div>
+            <p style="font-weight: 600; margin-bottom: 4px;">Render Real-Time Preview</p>
+            <p class="text-xs text-muted" style="margin-bottom: 16px;">See exact font scaling, borders, and typography styling</p>
+            <button type="button" class="btn btn-outline-gold btn-sm" id="btn-trigger-initial-preview">
+              Generate Instant Preview
+            </button>
+          </div>
+          <iframe id="preview-iframe" class="preview-iframe" style="display: none;" title="Certificate PDF Live Preview"></iframe>
+        </div>
+      </section>
+    </main>
+
+    <!-- Active Job Dashboard -->
+    <section class="glass-card job-dashboard" id="job-dashboard-section" aria-labelledby="dashboard-title">
+      <div class="dashboard-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <h2 class="card-title" id="dashboard-title">Active Generation Job</h2>
+            <span class="job-id-tag" id="display-job-id">JOB-ID</span>
+            <span class="status-pill status-queued" id="display-job-status-pill">QUEUED</span>
+          </div>
+          <p class="card-subtitle" id="display-job-meta">Mastering Advanced Software Architecture • 0 Recipients</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" class="btn btn-primary btn-sm" id="btn-download-all-zip" disabled>
+            📦 Download All Certificates (ZIP)
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-job-status">
+            🔄 Refresh
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-start-new-job">
+            ➕ New Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-card">
+        <div class="progress-header">
+          <span style="font-size: 0.86rem; font-weight: 600;">Generation Progress</span>
+          <span style="font-size: 0.86rem; font-weight: 700; color: var(--accent-gold);" id="display-progress-percent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Counter Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Recipients</span>
+          <span class="stat-value stat-total" id="stat-total-count">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Successfully Generated</span>
+          <span class="stat-value stat-succeeded" id="stat-succeeded-count">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Failed / Invalid</span>
+          <span class="stat-value stat-failed" id="stat-failed-count">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Remaining In Queue</span>
+          <span class="stat-value stat-pending" id="stat-pending-count">0</span>
+        </div>
+      </div>
+
+      <!-- Certificates Table with Filter & Search -->
+      <div>
+        <div class="table-controls">
+          <!-- Filter Tabs -->
+          <div class="tabs-nav" style="margin-bottom: 0;">
+            <button type="button" class="tab-btn active" data-filter="all">All Certificates</button>
+            <button type="button" class="tab-btn" data-filter="generated">Generated</button>
+            <button type="button" class="tab-btn" data-filter="failed">Failed</button>
+            <button type="button" class="tab-btn" data-filter="pending">Pending</button>
+          </div>
+
+          <!-- Instant Search -->
+          <div class="search-input-wrapper">
+            <input type="text" id="table-search-input" class="form-input" placeholder="🔍 Search by name or email...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="certificates-data-table">
+            <thead>
+              <tr>
+                <th>Recipient Name</th>
+                <th>Email Address</th>
+                <th>Specialization</th>
+                <th>Certificate Number</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="certificates-table-tbody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="table-pagination">
+          <span class="pagination-info" id="pagination-info-text">Showing 0 of 0 certificates</span>
+          <div class="pagination-btns">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" disabled>Previous</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" disabled>Next</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal for Individual PDF Preview -->
+    <div class="modal-overlay" id="pdf-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-pdf-title">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 style="font-size: 1.1rem; font-weight: 600;" id="modal-pdf-title">Certificate Inspection</h3>
+          <button type="button" class="modal-close" id="btn-close-pdf-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <iframe id="modal-pdf-iframe" style="width: 100%; height: 100%; min-height: 520px; border: none;" title="Certificate PDF Inspector"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
